@@ -1,16 +1,20 @@
 language: java
 jdk:
-  - openjdk11
+- openjdk11
 services:
-  - docker
+- docker
 script:
-  - ./gradlew build
-  - docker build -t sorend/namespace-config-controller:${TRAVIS_BRANCH} -f src/main/docker/Dockerfile.jvm .
+- "./gradlew build"
+- docker build -t sorend/namespace-config-controller:${TRAVIS_BRANCH} -f src/main/docker/Dockerfile.jvm
+  .
 deploy:
-  - provider: script
-    on:
-      tags: true
-    skip_cleanup: true
-    script:
-      - echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
-      - docker push sorend/namespace-config-controller:${TRAVIS_TAG}
+- provider: script
+  on:
+    tags: true
+  skip_cleanup: true
+  script:
+  - echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
+  - docker push sorend/namespace-config-controller:${TRAVIS_TAG}
+global:
+  env:
+    secure: hu0Ar8uCCv3eIm3xd5oTBwC0fyu6QX/ip2VXNqd3/xtnACzUikrf2i9reKtAxOnMXhjXpQd+3rv/z6B7iJdbfj5R4yC2GR1ttravzf56OlesOCgrhw7x+Q2l0LJF5R84iwGFbCvgVRQ2ISU+EvkFSnVyYnRgQ0ReQK8UEoNUo/7lCCPSKfn9gANPQF0guGG8ItonUSy5YSLfoGB5jD6l0JETeuCEjAwVY2vj7MOgQvnHfBJxi//UseUTUtiP51GET/E6qGIE1fhHgu4+c3gQSUlFAK0B1i6QYcpNf5F6AF1ler0WtMzdW67AIGSXstTDlD32WTLUW5k+ERJIPRQwP1HUxMJZ48tkcQNQTpd0ca6g+jVMelU6Rc1Vq6vU9wNpn3KQ+spBpkPE8PGOqrajzbwSRxJAAE2tZ7BlQ3DoCIPHg3FDONyHy9Ey588vgfcQbNINEZofMwRmGNaxfyWS5j6TYX4EBASoq5q/82xPgWrQt24pSMVjYO3Qmnk4ngcRfBtOY2ftJIbwraBy4xqcNMKSw9ZboECcZsCnUQn+UYqYC/6dpKTuywZLnDpXpxOehiqaBZTws+04UiG9om1EISzU+ZnCJxUIkIkpIklUJykSFvfuzoaB+DlF5k+fZrtp56H4sNhZ519zWOpcwaqUxZlRkNhOmIGybpJsVXdSOf4=
