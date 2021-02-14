@@ -5,7 +5,7 @@ services:
   - docker
 script:
   - ./gradlew build
-  - docker build -t sorend/namespace-config-controller:${TRAVIS_BRANCH} .
+  - docker build -t sorend/namespace-config-controller:${TRAVIS_BRANCH} -f src/main/docker/Dockerfile.jvm .
 deploy:
   - provider: script
     on:
