@@ -1,0 +1,82 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: namespace-config-controller
+  labels:
+    app: namespace-config-controller
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: namespace-config-controller
+  namespace: namespace-config-controller
+  labels:
+    app: namespace-config-controller
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: namespace-config-controller
+rules:
+  - apiGroups: [ "apiextensions.k8s.io" ]
+    resources: [ "customresourcedefinitions" ]
+    verbs: [ "get", "list" ]
+  - apiGroups: [ "openshift.bankdata.dk" ]
+    resources: [ "namespaceconfigs" ]
+    verbs: [ "get", "watch", "list" ]
+  - apiGroups: [ "openshift.bankdata.dk" ]
+    resources: [ "namespaceconfigs/status" ]
+    verbs: [ "get", "watch", "list", "update" ]
+  - apiGroups: [ "" ]
+    resources: [ "namespaces" ]
+    verbs: [ "get", "list", "patch", "update" ]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: namespace-config-controller
+subjects:
+  - kind: ServiceAccount
+    name: namespace-config-controller
+    namespace: namespace-config-controller
+    apiGroup: ""
+roleRef:
+  kind: ClusterRole
+  name: namespace-config-controller
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: namespace-config-controller
+  namespace: namespace-config-controller
+  labels:
+    app: namespace-config-controller
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: namespace-config-controller
+  template:
+    metadata:
+      labels:
+        app: namespace-config-controller
+    spec:
+      serviceAccountName: namespace-config-controller
+      containers:
+        - name: controller
+          image: sorend/namespace-config-controller:0.1
+          resources:
+            limits:
+              cpu: 300m
+              memory: 512Mi
+            requests:
+              cpu: 1m
+              memory: 64Mi
+          livenessProbe:
+            httpGet:
+              path: /-/healthz
+              port: 8080
+            failureThreshold: 5
+            periodSeconds: 10

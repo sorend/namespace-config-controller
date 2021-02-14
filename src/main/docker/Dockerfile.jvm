@@ -1,0 +1,12 @@
+FROM adoptopenjdk:11-jre-openj9
+
+ENV LANG='en_US.UTF-8' LANGUAGE='en_US:en'
+
+COPY build/libs/libs/* /libs/
+COPY build/libs/*.jar /app.jar
+
+EXPOSE 8080
+USER 1001
+
+ENTRYPOINT ["java"]
+CMD ["-XX:+ExitOnOutOfMemoryError", "-jar", "/app.jar"]

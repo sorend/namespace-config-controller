@@ -1,0 +1,16 @@
+language: java
+jdk:
+  - openjdk11
+services:
+  - docker
+script:
+  - ./gradlew build
+  - docker build -t sorend/namespace-config-controller:${TRAVIS_BRANCH} .
+deploy:
+  - provider: script
+    on:
+      tags: true
+    skip_cleanup: true
+    script:
+      - echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
+      - docker push sorend/namespace-config-controller:${TRAVIS_TAG}

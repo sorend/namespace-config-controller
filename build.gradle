@@ -1,0 +1,50 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+repositories {
+    mavenCentral()
+}
+
+application {
+    mainClassName = "namespace_config_controller.ControllerMain"
+}
+
+dependencies {
+    implementation 'io.fabric8:openshift-client:5.0.2'
+    implementation 'io.prometheus:simpleclient:0.10.0'
+    implementation 'io.prometheus:simpleclient_httpserver:0.10.0'
+    runtimeOnly 'org.slf4j:slf4j-simple:1.7.23'
+}
+
+group 'dk.bankdata.ose'
+version '0.1.1'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+}
+
+compileJava {
+    options.encoding = 'UTF-8'
+    options.compilerArgs << '-parameters'
+}
+
+compileTestJava {
+    options.encoding = 'UTF-8'
+}
+
+task copyLibs(type: Copy) {
+    from configurations.runtimeClasspath
+    into "build/libs/libs"
+}
+copyLibs.dependsOn jar
+assemble.dependsOn copyLibs
+
+tasks.named('jar') {
+    manifest {
+        attributes('Main-Class': application.mainClassName,
+                'Class-Path': configurations.runtimeClasspath.files.collect { "libs/${it.name}" }.join(' '))
+    }
+}

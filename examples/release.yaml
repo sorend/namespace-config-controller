@@ -1,0 +1,15 @@
+#
+---
+apiVersion: openshift.bankdata.dk/v1
+kind: NamespaceConfig
+metadata:
+  name: fmt-dev
+  namespace: fmt-dev
+spec:
+  extraAnnotations:
+    bankdata.dk/contact-owner: bduxyz
+    bankdata.dk/contact-email: bdmxyz@bankdata.dk
+    openshift.io/description: 'XYZ namespace'
+  extraLabels:
+    business-project: bankdata
+  multicast: true
