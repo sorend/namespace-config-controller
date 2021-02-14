@@ -12,11 +12,11 @@ build:
 
 # Create docker image
 docker:
+	echo "$(DOCKER_PASSWORD)" | docker login -u $(DOCKER_USERNAME) --password-stdin
 	docker build -t $(IMAGE):latest -f src/main/docker/Dockerfile.jvm .
 
 # Push docker image
 docker-deploy:
-	echo "$(DOCKER_PASSWORD)" | docker login -u $(DOCKER_USERNAME) --password-stdin
 	docker tag $(IMAGE):latest $(IMAGE):$(TRAVIS_TAG)
 	docker push $(IMAGE):$(TRAVIS_TAG)
 
