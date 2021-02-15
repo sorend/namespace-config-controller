@@ -8,7 +8,7 @@ all: build docker
 
 # Builds java application (requires JDK 11)
 build:
-    ./gradlew build
+	./gradlew build
 
 # Create docker image
 docker:
