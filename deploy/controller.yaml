@@ -66,7 +66,7 @@ spec:
       serviceAccountName: namespace-config-controller
       containers:
         - name: controller
-          image: sorend/namespace-config-controller:0.1
+          image: sorend/namespace-config-controller:0.1.1
           resources:
             limits:
               cpu: 300m
