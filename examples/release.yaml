@@ -3,8 +3,8 @@
 apiVersion: openshift.bankdata.dk/v1
 kind: NamespaceConfig
 metadata:
-  name: fmt-dev
-  namespace: fmt-dev
+  name: adpy
+  namespace: adpy
 spec:
   extraAnnotations:
     bankdata.dk/contact-owner: bduxyz
@@ -13,3 +13,5 @@ spec:
   extraLabels:
     business-project: bankdata
   multicast: true
+  owner: sorend
+  email: sorend@gmail.com

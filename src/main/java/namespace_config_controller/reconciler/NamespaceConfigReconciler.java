@@ -2,21 +2,31 @@ package namespace_config_controller.reconciler;
 
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.dsl.Resource;
+import io.fabric8.openshift.api.model.NetNamespace;
+import io.fabric8.openshift.client.OpenShiftClient;
 import io.prometheus.client.Counter;
 import io.prometheus.client.Gauge;
 import namespace_config_controller.controller.Reconciler;
 import namespace_config_controller.crds.NamespaceConfig;
 import namespace_config_controller.crds.NamespaceConfigPhase;
+import namespace_config_controller.crds.NamespaceConfigSpec;
 import namespace_config_controller.crds.NamespaceConfigStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class NamespaceConfigReconciler implements Reconciler<NamespaceConfig> {
 
     private static final String NETNAMESPACE_MULTICAST = "netnamespace.network.openshift.io/multicast-enabled";
+
+    private static final String ANNOTATION_OWNER = "bankdata.dk/project-owner";
+    private static final String ANNOTATION_EMAIL = "bankdata.dk/project-email";
+    private static final String ANNOTATION_SLACK = "bankdata.dk/project-slack";
+    private static final String OPENSHIFT_REQUESTER = "openshift.io/requester";
+    private static final String OPENSHIFT_DESCRIPTION = "openshift.io/description";
+    private static final String OPENSHIFT_DISPLAY_NAME = "openshift.io/display-name";
+
     private static final Logger logger = LoggerFactory.getLogger(NamespaceConfigReconciler.class);
 
     private static final Counter totalCounter = Counter.build()
@@ -29,9 +39,11 @@ public class NamespaceConfigReconciler implements Reconciler<NamespaceConfig> {
             .register();
 
     private final KubernetesClient client;
+    private final boolean provisionNetnamespace;
 
-    public NamespaceConfigReconciler(KubernetesClient client) {
+    public NamespaceConfigReconciler(KubernetesClient client, boolean provisionNetnamespace) {
         this.client = client;
+        this.provisionNetnamespace = provisionNetnamespace;
     }
 
     @Override
@@ -59,9 +71,18 @@ public class NamespaceConfigReconciler implements Reconciler<NamespaceConfig> {
         try {
             postStatus(resourceRef, NamespaceConfigPhase.New, "Reconciling");
 
+            NamespaceConfigSpec spec = originalObj.getSpec();
+            Map<String, String> annotations = spec.getExtraAnnotations();
+            Map<String, String> labels = spec.getExtraLabels();
 
-            Map<String, String> annotations = originalObj.getSpec().getExtraAnnotations();
-            Map<String, String> labels = originalObj.getSpec().getExtraLabels();
+            annotations.put(ANNOTATION_OWNER, spec.getOwner());
+            annotations.put(OPENSHIFT_REQUESTER, spec.getOwner());
+            annotations.put(ANNOTATION_EMAIL, spec.getEmail());
+            if (spec.getSlack() != null)
+                annotations.put(ANNOTATION_SLACK, spec.getSlack());
+            annotations.put(OPENSHIFT_DESCRIPTION, spec.getDescription());
+            annotations.put(OPENSHIFT_DISPLAY_NAME, spec.getDescription());
+
             logger.info("Namespace={}, annotations={}, labels={}", namespace, annotations, labels);
 
             if (annotations.size() == 0 && labels.size() == 0) {
@@ -88,28 +109,45 @@ public class NamespaceConfigReconciler implements Reconciler<NamespaceConfig> {
             });
 
             // apply netnamespace multicast policy
-            /*
-            boolean multicast = originalObj.getSpec().isMulticast();
-            OpenShiftClient openShiftClient = client.adapt(OpenShiftClient.class);
-            openShiftClient.netNamespaces().withName(namespace).edit(new UnaryOperator<NetNamespace>() {
-                @Override
-                public NetNamespace apply(NetNamespace netNamespace) {
-                    if (multicast)
-                        netNamespace.getMetadata().getAnnotations().put(NETNAMESPACE_MULTICAST, "true");
-                    else
-                        netNamespace.getMetadata().getAnnotations().remove(NETNAMESPACE_MULTICAST);
-                    return netNamespace;
-                }
-            });
-             */
+            if (provisionNetnamespace) {
+                boolean multicast = originalObj.getSpec().isMulticast();
+                OpenShiftClient openShiftClient = client.adapt(OpenShiftClient.class);
+                doReconcileNetnamespace(openShiftClient,namespace, multicast);
+            }
 
             postStatus(resourceRef, NamespaceConfigPhase.Succeeded, "Namespace config applied", originalObj.getMetadata().getGeneration());
             successGauge.labels(namespace, name).set(1);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             logger.error("{}/{} Error reconciling", namespace, name, e);
             successGauge.labels(namespace, name).set(0);
             postStatus(resourceRef, NamespaceConfigPhase.UpgradeFailed, "Failed: " + e.getMessage());
+        }
+    }
+
+    private void doReconcileNetnamespace(OpenShiftClient openShiftClient, String namespace, boolean multicast) {
+        Resource<NetNamespace> netnamespaceRef = ensureWithRetry(openShiftClient.netNamespaces().withName(namespace), 5);
+
+        netnamespaceRef.edit(netNamespace -> {
+            if (multicast)
+                netNamespace.getMetadata().getAnnotations().put(NETNAMESPACE_MULTICAST, "true");
+            else
+                netNamespace.getMetadata().getAnnotations().remove(NETNAMESPACE_MULTICAST);
+            return netNamespace;
+        });
+    }
+
+    private <K> Resource<K> ensureWithRetry(Resource<K> resourceRef, int times) {
+        try {
+            for (int i = 0; i < times; i++) {
+                if (resourceRef.get() != null)
+                    return resourceRef;
+                Thread.sleep(1000);
+            }
+            throw new IllegalArgumentException(resourceRef + ": could not lookup after " + times + " retries");
+        }
+        catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+            throw new IllegalArgumentException("Interrupted while waiting", ie);
         }
     }
 

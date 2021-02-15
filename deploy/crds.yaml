@@ -42,10 +42,28 @@ spec:
             type: object
             required:
               - multicast
+              - owner
+              - email
+              - description
             properties:
               multicast:
                 description: Multicast decides if multicast must be enabled on the namespace
                 type: boolean
+              owner:
+                description: Owner of the namespace, goes into openshift annotations
+                type: string
+                pattern: '^[a-z]+$'
+              email:
+                description: Email contact for the namespace, goes into openshift annotations
+                type: string
+                pattern: '^[a-z@\.-]+$'
+              slack:
+                description: Slack channel for the namespace
+                type: string
+                pattern: '^[a-z0-9-]+$'
+              description:
+                description: Namespace textual description
+                type: string
               extraAnnotations:
                 description: Additional annotations to put on the namespace
                 type: object
