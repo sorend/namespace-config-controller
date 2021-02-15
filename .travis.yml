@@ -4,7 +4,7 @@ jdk:
 services:
 - docker
 script:
-- "make"
+- "make all"
 deploy:
 - provider: script
   on:
