@@ -14,8 +14,9 @@ import namespace_config_controller.crds.NamespaceConfigStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
 
 public class NamespaceConfigReconciler implements Reconciler<NamespaceConfig> {
 
@@ -75,8 +76,8 @@ public class NamespaceConfigReconciler implements Reconciler<NamespaceConfig> {
             postStatus(resourceRef, NamespaceConfigPhase.New, "Reconciling");
 
             NamespaceConfigSpec spec = originalObj.getSpec();
-            Map<String, String> annotations = spec.getExtraAnnotations();
-            Map<String, String> labels = spec.getExtraLabels();
+            Map<String, String> annotations = Optional.ofNullable(spec.getExtraAnnotations()).orElse(new LinkedHashMap<>());
+            Map<String, String> labels = Optional.ofNullable(spec.getExtraLabels()).orElse(new LinkedHashMap<>());
 
             annotations.put(ANNOTATION_OWNER, spec.getOwner());
             annotations.put(OPENSHIFT_REQUESTER, spec.getOwner());

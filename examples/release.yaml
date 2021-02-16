@@ -5,8 +5,8 @@ metadata:
   name: adpy
   namespace: adpy
 spec:
-  extraAnnotations:
-    fluentd/include: "true"
+  #extraAnnotations:
+  #  fluentd/include: "true"
   extraLabels:
     business-project: bankdata
   multicast: true

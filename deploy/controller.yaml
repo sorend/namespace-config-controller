@@ -67,6 +67,7 @@ spec:
       containers:
         - name: controller
           image: sorend/namespace-config-controller:0.1.2
+          imagePullPolicy: Always
           resources:
             limits:
               cpu: 300m
