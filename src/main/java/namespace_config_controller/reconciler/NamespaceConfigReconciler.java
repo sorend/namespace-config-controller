@@ -27,8 +27,8 @@ public class NamespaceConfigReconciler implements Reconciler<NamespaceConfig> {
     private static final String OPENSHIFT_REQUESTER = "openshift.io/requester";
     private static final String OPENSHIFT_DESCRIPTION = "openshift.io/description";
     private static final String OPENSHIFT_DISPLAY_NAME = "openshift.io/display-name";
-    private static final String MANAGED_ANNOTATIONS = "openshift.bankdata.dk/v1/managed-annotations";
-    private static final String MANAGED_LABELS = "openshift.bankdata.dk/v1/managed-labels";
+    private static final String MANAGED_ANNOTATIONS = "openshift.bankdata.dk/managed-annotations";
+    private static final String MANAGED_LABELS = "openshift.bankdata.dk/managed-labels";
 
     private static final Logger logger = LoggerFactory.getLogger(NamespaceConfigReconciler.class);
 
