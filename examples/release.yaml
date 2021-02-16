@@ -6,9 +6,7 @@ metadata:
   namespace: adpy
 spec:
   extraAnnotations:
-    bankdata.dk/contact-owner: bduxyz
-    bankdata.dk/contact-email: bdmxyz@bankdata.dk
-    openshift.io/description: 'XYZ namespace'
+    fluentd/include: "true"
   extraLabels:
     business-project: bankdata
   multicast: true

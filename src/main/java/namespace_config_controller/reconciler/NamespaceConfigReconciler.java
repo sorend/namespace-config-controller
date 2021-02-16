@@ -14,6 +14,7 @@ import namespace_config_controller.crds.NamespaceConfigStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.Map;
 
 public class NamespaceConfigReconciler implements Reconciler<NamespaceConfig> {
@@ -26,6 +27,8 @@ public class NamespaceConfigReconciler implements Reconciler<NamespaceConfig> {
     private static final String OPENSHIFT_REQUESTER = "openshift.io/requester";
     private static final String OPENSHIFT_DESCRIPTION = "openshift.io/description";
     private static final String OPENSHIFT_DISPLAY_NAME = "openshift.io/display-name";
+    private static final String MANAGED_ANNOTATIONS = "openshift.bankdata.dk/v1/managed-annotations";
+    private static final String MANAGED_LABELS = "openshift.bankdata.dk/v1/managed-labels";
 
     private static final Logger logger = LoggerFactory.getLogger(NamespaceConfigReconciler.class);
 
@@ -83,6 +86,13 @@ public class NamespaceConfigReconciler implements Reconciler<NamespaceConfig> {
             annotations.put(OPENSHIFT_DESCRIPTION, spec.getDescription());
             annotations.put(OPENSHIFT_DISPLAY_NAME, spec.getDescription());
 
+            String managedAnnotations = String.join(" ", annotations.keySet());
+            annotations.put(MANAGED_ANNOTATIONS, managedAnnotations);
+            if (!labels.isEmpty()) {
+                String managedLabels = String.join(" ", labels.keySet());
+                annotations.put(MANAGED_LABELS, managedLabels);
+            }
+
             logger.info("Namespace={}, annotations={}, labels={}", namespace, annotations, labels);
 
             if (annotations.size() == 0 && labels.size() == 0) {
@@ -90,26 +100,36 @@ public class NamespaceConfigReconciler implements Reconciler<NamespaceConfig> {
                 return;
             }
 
-            postStatus(resourceRef, NamespaceConfigPhase.Upgrading, "Applying configuration");
+            postStatus(resourceRef, NamespaceConfigPhase.Upgrading, "Applying Namespace configuration");
             logger.info("Editing namespace {}", namespace);
 
             // transfer config labels and annotations to namespace
             client.namespaces().withName(namespace).edit(namespaceObj -> {
                 if (namespaceObj.getMetadata().getAnnotations() == null)
                     namespaceObj.getMetadata().setAnnotations(annotations);
-                else
+                else {
+                    String[] currentManagedAnnotations = namespaceObj.getMetadata().getAnnotations().getOrDefault(MANAGED_ANNOTATIONS, "").split(" +");
+                    for (String currentManagedAnnotation : currentManagedAnnotations)
+                        namespaceObj.getMetadata().getAnnotations().remove(currentManagedAnnotation);
                     namespaceObj.getMetadata().getAnnotations().putAll(annotations);
+                }
 
                 if (namespaceObj.getMetadata().getLabels() == null)
                     namespaceObj.getMetadata().setLabels(labels);
-                else
+                else {
+                    String[] currentManagedLabels = namespaceObj.getMetadata().getAnnotations().getOrDefault(MANAGED_LABELS, "").split(" +");
+                    for (String currentManagedLabel : currentManagedLabels)
+                        namespaceObj.getMetadata().getLabels().remove(currentManagedLabel);
                     namespaceObj.getMetadata().getLabels().putAll(labels);
+                }
 
                 return namespaceObj;
             });
 
             // apply netnamespace multicast policy
             if (provisionNetnamespace) {
+                postStatus(resourceRef, NamespaceConfigPhase.Upgrading, "Applying NetNamespace configuration");
+                logger.info("Editing netnamespace {}", namespace);
                 boolean multicast = originalObj.getSpec().isMulticast();
                 OpenShiftClient openShiftClient = client.adapt(OpenShiftClient.class);
                 doReconcileNetnamespace(openShiftClient,namespace, multicast);
