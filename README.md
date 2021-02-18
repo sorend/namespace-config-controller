@@ -1,10 +1,13 @@
-![Telephone Operators at work in the New Delhi Telephone Exchange. 1950](./docs/img/operator.jpg)
-*(c) People of India Photos*
-
-# namespace-config-controller -- writing an operator in Java
+# namespace-config-controller
 
 A controller for Openshift to apply namespace settings, which cannot be set by
 Helm (namespace annotations+labels and netnamespace multicast configuration)
+
+
+# Writing a Kubernetes Operator in Java
+
+![Telephone Operators at work in the New Delhi Telephone Exchange. 1950](./docs/img/operator.jpg)
+*(c) People of India Photos*
 
 ## Introduction
 
