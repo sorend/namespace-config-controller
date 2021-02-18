@@ -8,6 +8,9 @@ Helm (namespace annotations+labels and netnamespace multicast configuration)
 
 ## Introduction
 
+![Kubernetes](./docs/img/kubernetes.png)
+![Java](./docs/img/java.png)
+
 At [my current work](https://bankdata.dk/), we use a home-made GitOps approach for configuring namespaces in our multi-tenant Openshift 
 clusters. The approach is based on using Helm for configuring each namespace, with features such as ensuring
 rolebindings for the users who needs access to the namespace, setting up service accounts and services to interact 
