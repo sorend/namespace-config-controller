@@ -1,3 +1,5 @@
+![Telephone Operators at work in the New Delhi Telephone Exchange. 1950](./docs/img/operator.jpg)
+*(c) People of India Photos*
 
 # namespace-config-controller -- writing an operator in Java
 
