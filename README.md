@@ -3,6 +3,17 @@
 A controller for Openshift to apply namespace settings, which cannot be set by
 Helm (namespace annotations+labels and netnamespace multicast configuration)
 
+## Installation
+
+First apply the CRD, then afterwards apply the controller. This creates a Namespace and a SA with RBAC permissions
+for the controller to run, and a deployment with the controller itself:
+
+```bash
+kubectl apply -f deploy/crds.yaml
+kubectl apply -f deploy/controller.yaml
+```
+
+(As it's an internal tool, most likely you're here for the description below :-) )
 
 # Writing a Kubernetes Operator in Java
 
@@ -70,3 +81,64 @@ to be done:
 
 Once this is done, working with CRD defined objects, is the same as working with regular objects in the library.
 
+## Writing a CRD with Java classes
+
+Writing a CRD is quite straight forward, as it's mostly JSON schema, and lots of examples can be found. The CRD for
+this operator can be found in [deploy/crds.yaml](deploy/crds.yaml).
+
+As there is no generator to create Java mapping for the CRD, we must implement it ourselves. The Fabric8io library
+supports creating CustomResources which have a Spec and a Status section very easily:
+
+```java
+// The CR mapping class
+@Group(NamespaceConfig.GROUP)
+@Version(NamespaceConfig.VERSION)
+public class NamespaceConfig extends CustomResource<NamespaceConfigSpec, NamespaceConfigStatus> implements Namespaced {
+    public static final String GROUP = "openshift.bankdata.dk";
+    public static final String VERSION = "v1";
+}
+// Supporting CR list mapping class
+public class NamespaceConfigList extends CustomResourceList<NamespaceConfig> {
+}
+```
+
+`NamespaceConfig` is the top level class, it extends a CustomResource which is parametrized with two types, mapping to
+the `spec` and `status` fields. Standard apiVersion, kind and metadata are supported out of the box by the extension.
+Here we also implement `Namespaced` as our custom resource is namespaced. We must also implement a list type, which is 
+fairly straight forward.
+
+```java
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonDeserialize(using = JsonDeserializer.None.class)
+public class NamespaceConfigSpec implements KubernetesResource {
+  private boolean multicast;
+  private String owner;
+  private String email;
+  private String description;
+  private String slack;
+  private Map<String, String> extraAnnotations;
+  private Map<String, String> extraLabels;
+
+  public boolean isMulticast() { return multicast; }
+  public void setMulticast(boolean multicast) { this.multicast = multicast; }
+  public Map<String, String> getExtraAnnotations() { return extraAnnotations; }
+  public void setExtraAnnotations(Map<String, String> extraAnnotations) { this.extraAnnotations = extraAnnotations; }
+  ...
+}
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonDeserialize(using = JsonDeserializer.None.class)
+public class NamespaceConfigStatus implements KubernetesResource {
+  private long observedGeneration;
+  private NamespaceConfigPhase phase;
+  private String message;
+
+  public long getObservedGeneration() { return observedGeneration; }
+  public void setObservedGeneration(long observedGeneration) { this.observedGeneration = observedGeneration; }
+  ...
+}
+```
+
+The implemented spec and status objects are also plain PoJo objects. Here the parser is instructed to ignore unknown
+fields, which is not strictly necessary as of latest custom resource definition version, where it's needed to explicitly
+tell the Kubernetes that it allows any attributes in an object using the `x-kubernetes-preserve-unknown-fields` attribute.
