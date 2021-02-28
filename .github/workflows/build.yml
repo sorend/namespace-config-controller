@@ -13,8 +13,8 @@ on:
       - 'master'
 
 jobs:
-  docker:
-    name: Docker
+  build_and_push:
+    name: Build and publish
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
@@ -24,7 +24,6 @@ jobs:
       uses: crazy-max/ghaction-docker-meta@v1
       with:
         images: |
-          sorend/namespace-config-controller
           ghcr.io/sorend/namespace-config-controller
         tag-sha: true
     - name: Setup docker buildx
@@ -33,13 +32,13 @@ jobs:
       uses: actions/setup-java@v1
       with:
         java-version: 11
+    - name: Login to ghcr
+      uses: docker/login-action@v1
+      with:
+        username: sorend
+        password: ${{ secrets.GHCR_TOKEN }}
     - name: Build with gradle
       run: ./gradlew build
-    #- name: Login to dockerhub
-    #  uses: docker/login-action@v1
-    #  with:
-    #    username: ${{ secrets.DOCKERHUB_USERNAME }}
-    #    password: ${{ secrets.DOCKERHUB_TOKEN }}
     - name: Build and push
       id: docker_build
       uses: docker/build-push-action@v2
