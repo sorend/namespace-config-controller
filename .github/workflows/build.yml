@@ -9,6 +9,10 @@ on:
     tags:
       - 'v*.*.*'
 
+concurrency:
+  group: ${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build_and_push:
     name: Build and publish
