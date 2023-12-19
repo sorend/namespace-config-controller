@@ -18,7 +18,7 @@ jobs:
       uses: actions/checkout@v4.0.0
     - name: Docker meta
       id: docker_meta
-      uses: crazy-max/ghaction-docker-meta@v5.0.0
+      uses: crazy-max/ghaction-docker-meta@v5.4.0
       with:
         images: |
           ghcr.io/sorend/namespace-config-controller
